@@ -1,0 +1,34 @@
+name: Build mod
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore BiomesExpansion.csproj
+
+      - name: Build
+        run: dotnet build BiomesExpansion.csproj -c Release --no-restore -o out
+
+      - name: Empacotar .scmod
+        run: |
+          mkdir -p pack
+          cp out/BiomesExpansion.dll pack/
+          cp modinfo.json pack/
+          cd pack
+          zip -r ../BiomesExpansion.scmod modinfo.json BiomesExpansion.dll
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BiomesExpansion-scmod
+          path: BiomesExpansion.scmod
