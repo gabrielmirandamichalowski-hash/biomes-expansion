@@ -13,7 +13,7 @@ namespace BiomesExpansion {
 
         public BiomeNoise(TerrainContentsGenerator24 generator, int seed) {
             m_generator = generator;
-            Engine.Random random = new Engine.Random(seed ^ 0x5EED1A);
+            Game.Random random = new Game.Random(seed ^ 0x5EED1A);
             m_jungleOffsetX = random.Float(-5000f, 5000f);
             m_jungleOffsetZ = random.Float(-5000f, 5000f);
         }
