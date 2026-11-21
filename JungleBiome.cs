@@ -25,7 +25,7 @@ namespace BiomesExpansion {
             int[] heights = [12, 14, 15, 16, 18, 19, 20, 22, 24, 26, 28, 30];
             int trunk = PlantsManager.GetTreeTrunkValue(TreeType.Oak);
             int leaves = PlantsManager.GetTreeLeavesValue(TreeType.Oak);
-            Engine.Random random = new Engine.Random(seed ^ 0x6A09);
+            Game.Random random = new Game.Random(seed ^ 0x6A09);
             TerrainBrush[] brushes = new TerrainBrush[heights.Length];
             for (int i = 0; i < heights.Length; i++) {
                 int height = heights[i];
@@ -47,7 +47,7 @@ namespace BiomesExpansion {
         /// <summary>Passo de geracao (pass 4, depois das arvores originais).</summary>
         public void GenerateJungleTrees(TerrainChunk chunk) {
             Terrain terrain = m_subsystemTerrain.Terrain;
-            Engine.Random random = new Engine.Random(m_seed + chunk.Coords.X * 7919 + chunk.Coords.Y * 104729);
+            Game.Random random = new Game.Random(m_seed + chunk.Coords.X * 7919 + chunk.Coords.Y * 104729);
             int placed = 0;
             for (int attempt = 0; attempt < 48 && placed < 9; attempt++) {
                 int x = chunk.Origin.X + random.Int(2, 13);
