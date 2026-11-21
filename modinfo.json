@@ -1,0 +1,9 @@
+{
+  "Name": "Biomes Expansion",
+  "Version": "0.0.1",
+  "ApiVersion": "1.9.3",
+  "Description": "Novos biomas para a geracao de terreno (etapa 0: teste do pipeline).",
+  "ScVersion": "2.4.0.0",
+  "Author": "Biomes Expansion",
+  "PackageName": "biomesexpansion"
+}
