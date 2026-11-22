@@ -120,11 +120,25 @@ namespace BiomesExpansion {
         public void GenerateClimate(TerrainChunk chunk) {
             for (int lx = 0; lx < 16; lx++) {
                 for (int lz = 0; lz < 16; lz++) {
-                    float weight = m_noise.JungleWeight(chunk.Origin.X + lx, chunk.Origin.Y + lz);
+                    int worldX = chunk.Origin.X + lx;
+                    int worldZ = chunk.Origin.Y + lz;
+                    float weight = m_noise.JungleWeight(worldX, worldZ);
                     if (weight <= 0.01f) {
                         continue;
                     }
                     int temperature = chunk.GetTemperatureFast(lx, lz);
+                    // Altura do terreno SEM vegetacao (as copas das arvores nao contam).
+                    float groundHeight = m_generator.CalculateHeight(worldX, worldZ);
+                    // Preserva neve e gelo: o passo de neve do jogo usa esta mesma temperatura.
+                    // Colunas congeladas (ou quase) na altura do terreno ficam como o jogo gerou.
+                    if (temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight((int)groundHeight) <= 3) {
+                        continue;
+                    }
+                    // O efeito some gradualmente entre 90 e 120 blocos de altura (montanhas).
+                    weight *= 1f - MathUtils.Saturate((groundHeight - 90f) / 30f);
+                    if (weight <= 0.01f) {
+                        continue;
+                    }
                     int humidity = chunk.GetHumidityFast(lx, lz);
                     int newTemperature = Math.Max(temperature, (int)MathF.Round(MathUtils.Lerp(temperature, 12f, weight)));
                     int newHumidity = Math.Max(humidity, (int)MathF.Round(MathUtils.Lerp(humidity, 15f, weight)));
