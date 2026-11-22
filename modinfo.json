@@ -1,8 +1,8 @@
 {
   "Name": "Biomes Expansion",
-  "Version": "0.2.1",
+  "Version": "0.3.0",
   "ApiVersion": "1.9.3",
-  "Description": "Novos biomas para a geracao de terreno (etapa 0: teste do pipeline).",
+  "Description": "Jungle v0.3 (modo de teste: jungle em todo lugar).",
   "ScVersion": "2.4.0.0",
   "Author": "Biomes Expansion",
   "PackageName": "biomesexpansion"
