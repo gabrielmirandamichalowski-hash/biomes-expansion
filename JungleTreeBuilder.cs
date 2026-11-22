@@ -186,6 +186,21 @@ namespace BiomesExpansion {
             return b.Finish();
         }
 
+        /// <summary>Arvore pequena de jungle: tronco curto e copa compacta.</summary>
+        public static TerrainBrush CreateSmallTree(Game.Random random, int trunk, int leaves) {
+            JungleTreeBuilder b = new(random, trunk, leaves);
+            int h = random.Int(5, 9);
+            b.AddBlob(0, h, 0, random.Float(2.3f, 3.1f), random.Float(1.5f, 2.1f), random.Float(2.3f, 3.1f));
+            if (random.Bool(0.5f)) {
+                b.AddBlob(random.Int(-2, 2), h - 2, random.Int(-2, 2), 1.8f, 1.3f, 1.8f);
+            }
+            for (int y = -2; y <= h - 1; y++) {
+                b.AddTrunk(0, y, 0);
+            }
+            b.AddVines(0.12f, 0.02f, 6);
+            return b.Finish();
+        }
+
         /// <summary>Arbusto: um toco de tronco coberto por uma bola de folhas.</summary>
         public static TerrainBrush CreateBush(Game.Random random, int trunk, int leaves) {
             JungleTreeBuilder b = new(random, trunk, leaves);
