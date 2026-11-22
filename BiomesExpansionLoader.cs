@@ -18,10 +18,10 @@ namespace BiomesExpansion {
                 BiomeNoise noise = new(generator, generator.m_seed);
                 JungleBiome jungle = new(noise, subsystemTerrain, generator.m_seed);
                 generator.ChunkGenerationStep4.Add(
-                    new ChunkGenerationStep(JungleTreesOrder, jungle.GenerateJungleTrees, "BiomesExpansion.JungleTrees")
+                    new ChunkGenerationStep(JungleTreesOrder, jungle.GenerateJungle, "BiomesExpansion.Jungle")
                 );
                 // A lista e ordenada pelo jogo depois de todos os hooks.
-                Log.Information("[BiomesExpansion] Jungle v0.1 registrada.");
+                Log.Information("[BiomesExpansion] Jungle v0.2 registrada.");
             }
             catch (Exception e) {
                 Log.Error("[BiomesExpansion] Falha ao registrar a jungle: " + e);
