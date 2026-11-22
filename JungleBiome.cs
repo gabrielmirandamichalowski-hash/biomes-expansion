@@ -41,10 +41,12 @@ namespace BiomesExpansion {
             Terrain terrain = m_subsystemTerrain.Terrain;
             Game.Random random = new(m_seed + chunk.Coords.X * 7919 + chunk.Coords.Y * 104729);
             List<Point3> placed = [];
-            //            pinceis        tent. max  chance  desvio  dist  plano
-            Place(chunk, terrain, random, m_giantTrees, 12, 2, 0.55f, 4, 11, 6, true, placed);
-            Place(chunk, terrain, random, m_midTrees, 40, 8, 1.00f, 3, 12, 3, false, placed);
-            Place(chunk, terrain, random, m_bushes, 40, 12, 0.90f, 2, 13, 2, false, placed);
+            //            pinceis        tent. max  chance  desvio  dist  plano  sob copa
+            Place(chunk, terrain, random, m_giantTrees, 12, 2, 0.55f, 4, 11, 6, true, false, placed);
+            Place(chunk, terrain, random, m_midTrees, 40, 8, 1.00f, 3, 12, 3, false, false, placed);
+            // Arbustos por ultimo e em lista propria: procuram o chao POR BAIXO da copa das arvores.
+            List<Point3> bushPlaced = [];
+            Place(chunk, terrain, random, m_bushes, 80, 24, 0.95f, 2, 13, 2, false, true, bushPlaced);
         }
 
         void Place(TerrainChunk chunk,
@@ -58,6 +60,7 @@ namespace BiomesExpansion {
             int maxOffset,
             int minDistance,
             bool needsFlat,
+            bool belowCanopy,
             List<Point3> placed) {
             int count = 0;
             for (int attempt = 0; attempt < attempts && count < maxCount; attempt++) {
@@ -67,7 +70,7 @@ namespace BiomesExpansion {
                 if (weight <= 0.05f || !random.Bool(weight * chance)) {
                     continue;
                 }
-                int y = terrain.CalculateTopmostCellHeight(x, z);
+                int y = belowCanopy ? FindGroundBelowCanopy(terrain, x, z) : terrain.CalculateTopmostCellHeight(x, z);
                 if (y < 66) {
                     continue;
                 }
@@ -90,6 +93,24 @@ namespace BiomesExpansion {
                     Log.Information("[BiomesExpansion] Primeira vegetacao de jungle em (" + x + ", " + y + ", " + z + ")");
                 }
             }
+        }
+
+        /// <summary>
+        /// Desce a partir do topo da coluna atravessando so ar, folhas e hera ate achar terra ou grama.
+        /// Devolve -1 se encontrar tronco, pedra, agua etc. (coluna ocupada).
+        /// </summary>
+        static int FindGroundBelowCanopy(Terrain terrain, int x, int z) {
+            int y = terrain.CalculateTopmostCellHeight(x, z);
+            for (int i = 0; i < 64 && y >= 1; i++, y--) {
+                int contents = terrain.GetCellContentsFast(x, y, z);
+                if (contents == 2 || contents == 8) {
+                    return y;
+                }
+                if (contents != 0 && contents != 12 && contents != 197) {
+                    return -1;
+                }
+            }
+            return -1;
         }
 
         static bool TooClose(List<Point3> placed, int x, int z, int minDistance) {
