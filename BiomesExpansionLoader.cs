@@ -6,6 +6,11 @@ namespace BiomesExpansion {
         // Passo 4 (vegetacao). Ordem 310: logo depois de GenerateTrees (300).
         const int JungleTreesOrder = 310;
 
+        // Obrigatorio: sem registrar o gancho aqui, o jogo nunca chama TerrainContentsGenerator24Initialize.
+        public override void __ModInitialize() {
+            ModsManager.RegisterHook("TerrainContentsGenerator24Initialize", this);
+        }
+
         public override void TerrainContentsGenerator24Initialize(
             ITerrainContentsGenerator terrainContentsGenerator,
             SubsystemTerrain subsystemTerrain) {
