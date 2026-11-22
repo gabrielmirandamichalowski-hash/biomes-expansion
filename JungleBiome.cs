@@ -3,19 +3,22 @@ using Game;
 
 namespace BiomesExpansion {
     /// <summary>
-    /// Jungle v0.2 (estilo Minecraft): arvores gigantes de tronco largo, arvores medias de copa
-    /// fechada, arbustos e cipos. Acrescenta vegetacao por cima da original; nada do jogo base e removido.
+    /// Jungle v0.3 (estilo Minecraft): arvores gigantes de tronco largo, medias, pequenas, arbustos
+    /// e cipos; remove as arvores originais dentro da jungle e deixa a grama e as folhas mais vivas.
     /// </summary>
     public class JungleBiome {
+        readonly TerrainContentsGenerator24 m_generator;
         readonly BiomeNoise m_noise;
         readonly SubsystemTerrain m_subsystemTerrain;
         readonly int m_seed;
         readonly TerrainBrush[] m_giantTrees;
         readonly TerrainBrush[] m_midTrees;
+        readonly TerrainBrush[] m_smallTrees;
         readonly TerrainBrush[] m_bushes;
         int m_loggedTrees;
 
-        public JungleBiome(BiomeNoise noise, SubsystemTerrain subsystemTerrain, int seed) {
+        public JungleBiome(TerrainContentsGenerator24 generator, BiomeNoise noise, SubsystemTerrain subsystemTerrain, int seed) {
+            m_generator = generator;
             m_noise = noise;
             m_subsystemTerrain = subsystemTerrain;
             m_seed = seed;
@@ -30,13 +33,72 @@ namespace BiomesExpansion {
             for (int i = 0; i < m_midTrees.Length; i++) {
                 m_midTrees[i] = JungleTreeBuilder.CreateMidTree(random, trunk, leaves);
             }
+            m_smallTrees = new TerrainBrush[10];
+            for (int i = 0; i < m_smallTrees.Length; i++) {
+                m_smallTrees[i] = JungleTreeBuilder.CreateSmallTree(random, trunk, leaves);
+            }
             m_bushes = new TerrainBrush[6];
             for (int i = 0; i < m_bushes.Length; i++) {
                 m_bushes[i] = JungleTreeBuilder.CreateBush(random, trunk, leaves);
             }
         }
 
-        /// <summary>Passo de geracao (pass 4, depois das arvores originais).</summary>
+        /// <summary>
+        /// Substitui o passo original "GenerateTrees". E a mesma logica do jogo, mas cada candidato a
+        /// arvore e descartado com probabilidade proporcional a mascara da jungle: no centro da jungle
+        /// nao nasce arvore original, e nas bordas elas voltam aos poucos.
+        /// </summary>
+        public void GenerateVanillaTrees(TerrainChunk chunk) {
+            if (!m_generator.TGExtras) {
+                return;
+            }
+            Terrain terrain = m_subsystemTerrain.Terrain;
+            int cx = chunk.Coords.X;
+            int cz = chunk.Coords.Y;
+            Game.Random random = new(m_seed + cx + 3943 * cz);
+            int humidity = m_generator.CalculateHumidity(cx * 16, cz * 16);
+            int temperature = m_generator.CalculateTemperature(cx * 16, cz * 16);
+            float forestDensity = m_generator.CalculateForestDensity(cx * 16, cz * 16);
+            int treeCount = (int)(6f * forestDensity);
+            int placed = 0;
+            for (int k = 0; k < 36 && placed < treeCount; k++) {
+                int x = cx * 16 + random.Int(2, 13);
+                int z = cz * 16 + random.Int(2, 13);
+                float jungle = m_noise.JungleWeight(x, z);
+                if (jungle > 0f && random.Bool(MathUtils.Saturate(jungle * 1.3f))) {
+                    continue;
+                }
+                int y = terrain.CalculateTopmostCellHeight(x, z);
+                if (y < 66) {
+                    continue;
+                }
+                int ground = terrain.GetCellContentsFast(x, y, z);
+                if (ground != 2 && ground != 8) {
+                    continue;
+                }
+                y++;
+                if (!BlocksManager.Blocks[terrain.GetCellContentsFast(x + 1, y, z)].IsCollidable
+                    && !BlocksManager.Blocks[terrain.GetCellContentsFast(x - 1, y, z)].IsCollidable
+                    && !BlocksManager.Blocks[terrain.GetCellContentsFast(x, y, z + 1)].IsCollidable
+                    && !BlocksManager.Blocks[terrain.GetCellContentsFast(x, y, z - 1)].IsCollidable) {
+                    TreeType? treeType = PlantsManager.GenerateRandomTreeType(
+                        random,
+                        temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(y),
+                        humidity,
+                        y
+                    );
+                    if (treeType.HasValue) {
+                        var brushes = PlantsManager.GetTreeBrushes(treeType.Value);
+                        TerrainBrush brush = brushes[random.Int(brushes.Count)];
+                        brush.PaintFast(chunk, x, y, z);
+                        chunk.AddBrushPaint(x, y, z, brush);
+                    }
+                    placed++;
+                }
+            }
+        }
+
+        /// <summary>Vegetacao da jungle (pass 4, depois das arvores originais).</summary>
         public void GenerateJungle(TerrainChunk chunk) {
             Terrain terrain = m_subsystemTerrain.Terrain;
             Game.Random random = new(m_seed + chunk.Coords.X * 7919 + chunk.Coords.Y * 104729);
@@ -44,9 +106,36 @@ namespace BiomesExpansion {
             //            pinceis        tent. max  chance  desvio  dist  plano  sob copa
             Place(chunk, terrain, random, m_giantTrees, 12, 2, 0.55f, 4, 11, 6, true, false, placed);
             Place(chunk, terrain, random, m_midTrees, 40, 8, 1.00f, 3, 12, 3, false, false, placed);
+            Place(chunk, terrain, random, m_smallTrees, 60, 14, 1.00f, 2, 13, 3, false, false, placed);
             // Arbustos por ultimo e em lista propria: procuram o chao POR BAIXO da copa das arvores.
             List<Point3> bushPlaced = [];
             Place(chunk, terrain, random, m_bushes, 80, 24, 0.95f, 2, 13, 2, false, true, bushPlaced);
+        }
+
+        /// <summary>
+        /// Deixa o clima da jungle mais quente e umido, coluna por coluna, proporcional a mascara.
+        /// O jogo colore grama, folhas e hera pelo clima: com umidade alta e clima quente a grama
+        /// fica no verde mais vivo da paleta. Efeito colateral: a jungle fica mais quente e umida.
+        /// </summary>
+        public void GenerateClimate(TerrainChunk chunk) {
+            for (int lx = 0; lx < 16; lx++) {
+                for (int lz = 0; lz < 16; lz++) {
+                    float weight = m_noise.JungleWeight(chunk.Origin.X + lx, chunk.Origin.Y + lz);
+                    if (weight <= 0.01f) {
+                        continue;
+                    }
+                    int temperature = chunk.GetTemperatureFast(lx, lz);
+                    int humidity = chunk.GetHumidityFast(lx, lz);
+                    int newTemperature = Math.Max(temperature, (int)MathF.Round(MathUtils.Lerp(temperature, 12f, weight)));
+                    int newHumidity = Math.Max(humidity, (int)MathF.Round(MathUtils.Lerp(humidity, 15f, weight)));
+                    if (newTemperature != temperature) {
+                        chunk.SetTemperatureFast(lx, lz, newTemperature);
+                    }
+                    if (newHumidity != humidity) {
+                        chunk.SetHumidityFast(lx, lz, newHumidity);
+                    }
+                }
+            }
         }
 
         void Place(TerrainChunk chunk,
