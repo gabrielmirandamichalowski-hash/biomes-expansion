@@ -7,6 +7,12 @@ namespace BiomesExpansion {
     /// Somente leitura depois de criada, portanto segura para varias threads.
     /// </summary>
     public class BiomeNoise {
+        /// <summary>
+        /// MODO DE TESTE: com true, a jungle aparece em todo lugar (so para ver o bioma rapido).
+        /// Depois de testar, volte para false para a jungle surgir so em regioes quentes e umidas.
+        /// </summary>
+        public const bool ForceJungleEverywhere = true;
+
         readonly TerrainContentsGenerator24 m_generator;
         readonly float m_jungleOffsetX;
         readonly float m_jungleOffsetZ;
@@ -26,6 +32,9 @@ namespace BiomesExpansion {
         /// coerentes e com transicao gradual nas bordas.
         /// </summary>
         public float JungleWeight(int x, int z) {
+            if (ForceJungleEverywhere) {
+                return 1f;
+            }
             float warm = Squish(m_generator.CalculateTemperature(x, z), 6f, 9f);
             if (warm <= 0f) {
                 return 0f;
