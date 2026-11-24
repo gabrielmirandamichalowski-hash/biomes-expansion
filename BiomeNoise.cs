@@ -27,19 +27,21 @@ namespace BiomesExpansion {
         public static float Squish(float v, float zero, float one) => MathUtils.Saturate((v - zero) / (one - zero));
 
         /// <summary>
-        /// 0 = sem jungle, 1 = jungle plena. Exige clima quente e umido (usa o clima original
-        /// do jogo) e um ruido proprio de manchas grandes, para a jungle aparecer em regioes
-        /// coerentes e com transicao gradual nas bordas.
+        /// 0 = sem jungle, 1 = jungle plena. Exige clima realmente quente e umido (clima original do
+        /// jogo) E uma mancha do ruido proprio. Abaixo de um valor minimo a mascara vale exatamente 0,
+        /// entao nao sobram arvores soltas fora da jungle: ela comeca e termina em bordas definidas
+        /// (com transicao gradual so dentro da borda).
+        /// Calibrado simulando o ruido do jogo: ~7,7% do mapa tem alguma jungle e ~5,3% e nucleo.
         /// </summary>
         public float JungleWeight(int x, int z) {
             if (ForceJungleEverywhere) {
                 return 1f;
             }
-            float warm = Squish(m_generator.CalculateTemperature(x, z), 6f, 9f);
+            float warm = Squish(m_generator.CalculateTemperature(x, z), 7f, 10f);
             if (warm <= 0f) {
                 return 0f;
             }
-            float wet = Squish(m_generator.CalculateHumidity(x, z), 4f, 7f);
+            float wet = Squish(m_generator.CalculateHumidity(x, z), 7f, 10f);
             if (wet <= 0f) {
                 return 0f;
             }
@@ -51,7 +53,8 @@ namespace BiomesExpansion {
                 2f,
                 0.55f
             );
-            return warm * wet * Squish(patch, 0.50f, 0.60f);
+            float raw = warm * wet * Squish(patch, 0.52f, 0.61f);
+            return Squish(raw, 0.30f, 0.80f);
         }
     }
 }
