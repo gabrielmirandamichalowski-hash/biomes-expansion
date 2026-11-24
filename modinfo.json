@@ -1,8 +1,8 @@
 {
   "Name": "Biomes Expansion",
-  "Version": "0.3.1",
+  "Version": "0.4.0",
   "ApiVersion": "1.9.3",
-  "Description": "Jungle v0.3 (modo de teste: jungle em todo lugar).",
+  "Description": "Jungle v0.4: bioma de jungle com blocos proprios.",
   "ScVersion": "2.4.0.0",
   "Author": "Biomes Expansion",
   "PackageName": "biomesexpansion"
