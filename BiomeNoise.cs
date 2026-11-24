@@ -9,9 +9,9 @@ namespace BiomesExpansion {
     public class BiomeNoise {
         /// <summary>
         /// MODO DE TESTE: com true, a jungle aparece em todo lugar (so para ver o bioma rapido).
-        /// Depois de testar, volte para false para a jungle surgir so em regioes quentes e umidas.
+        /// Em false (normal), ela surge so em regioes quentes e umidas, em manchas grandes.
         /// </summary>
-        public const bool ForceJungleEverywhere = true;
+        public const bool ForceJungleEverywhere = false;
 
         readonly TerrainContentsGenerator24 m_generator;
         readonly float m_jungleOffsetX;
@@ -46,12 +46,12 @@ namespace BiomesExpansion {
             float patch = SimplexNoise.OctavedNoise(
                 x + m_jungleOffsetX,
                 z + m_jungleOffsetZ,
-                0.0010f / m_generator.TGBiomeScaling,
+                0.0012f / m_generator.TGBiomeScaling,
                 4,
                 2f,
                 0.55f
             );
-            return warm * wet * Squish(patch, 0.55f, 0.65f);
+            return warm * wet * Squish(patch, 0.50f, 0.60f);
         }
     }
 }
