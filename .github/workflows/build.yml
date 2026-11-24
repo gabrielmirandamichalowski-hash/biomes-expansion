@@ -1,3 +1,4 @@
+
 name: Build mod
 
 on:
@@ -25,7 +26,6 @@ jobs:
           mkdir -p pack/Assets/Textures
           cp out/BiomesExpansion.dll pack/
           cp modinfo.json pack/
-          cp JungleBlocks.csv pack/
           cp JungleBlocks.png pack/Assets/Textures/
           cd pack
           zip -r ../BiomesExpansion.scmod .
