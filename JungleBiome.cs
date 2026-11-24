@@ -3,7 +3,7 @@ using Game;
 
 namespace BiomesExpansion {
     /// <summary>
-    /// Jungle v0.3 (estilo Minecraft): arvores gigantes de tronco largo, medias, pequenas, arbustos
+    /// Jungle v0.4 (estilo Minecraft, blocos proprios): arvores gigantes de tronco largo, medias, pequenas, arbustos
     /// e cipos; remove as arvores originais dentro da jungle e deixa a grama e as folhas mais vivas.
     /// </summary>
     public class JungleBiome {
@@ -11,6 +11,7 @@ namespace BiomesExpansion {
         readonly BiomeNoise m_noise;
         readonly SubsystemTerrain m_subsystemTerrain;
         readonly int m_seed;
+        readonly int m_leavesIndex;
         readonly TerrainBrush[] m_giantTrees;
         readonly TerrainBrush[] m_midTrees;
         readonly TerrainBrush[] m_smallTrees;
@@ -22,8 +23,15 @@ namespace BiomesExpansion {
             m_noise = noise;
             m_subsystemTerrain = subsystemTerrain;
             m_seed = seed;
-            int trunk = PlantsManager.GetTreeTrunkValue(TreeType.Oak);
-            int leaves = PlantsManager.GetTreeLeavesValue(TreeType.Oak);
+            // Blocos proprios da jungle (alocados pelo jogo ao carregar o mod). Se algo falhar, cai no carvalho.
+            int trunk = JungleWoodBlock.Index;
+            int leaves = JungleLeavesBlock.Index;
+            if (trunk <= 0 || leaves <= 0) {
+                Log.Warning("[BiomesExpansion] Blocos da jungle nao foram alocados; usando carvalho.");
+                trunk = PlantsManager.GetTreeTrunkValue(TreeType.Oak);
+                leaves = PlantsManager.GetTreeLeavesValue(TreeType.Oak);
+            }
+            m_leavesIndex = leaves;
             Game.Random random = new(seed ^ 0x6A09);
             m_giantTrees = new TerrainBrush[6];
             for (int i = 0; i < m_giantTrees.Length; i++) {
@@ -202,14 +210,14 @@ namespace BiomesExpansion {
         /// Desce a partir do topo da coluna atravessando so ar, folhas e hera ate achar terra ou grama.
         /// Devolve -1 se encontrar tronco, pedra, agua etc. (coluna ocupada).
         /// </summary>
-        static int FindGroundBelowCanopy(Terrain terrain, int x, int z) {
+        int FindGroundBelowCanopy(Terrain terrain, int x, int z) {
             int y = terrain.CalculateTopmostCellHeight(x, z);
             for (int i = 0; i < 64 && y >= 1; i++, y--) {
                 int contents = terrain.GetCellContentsFast(x, y, z);
                 if (contents == 2 || contents == 8) {
                     return y;
                 }
-                if (contents != 0 && contents != 12 && contents != 197) {
+                if (contents != 0 && contents != 12 && contents != m_leavesIndex && contents != 197) {
                     return -1;
                 }
             }
