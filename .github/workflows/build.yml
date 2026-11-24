@@ -22,11 +22,13 @@ jobs:
 
       - name: Empacotar .scmod
         run: |
-          mkdir -p pack
+          mkdir -p pack/Assets/Textures
           cp out/BiomesExpansion.dll pack/
           cp modinfo.json pack/
+          cp JungleBlocks.csv pack/
+          cp JungleBlocks.png pack/Assets/Textures/
           cd pack
-          zip -r ../BiomesExpansion.scmod modinfo.json BiomesExpansion.dll
+          zip -r ../BiomesExpansion.scmod .
 
       - uses: actions/upload-artifact@v4
         with:
