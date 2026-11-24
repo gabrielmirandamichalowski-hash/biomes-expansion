@@ -11,6 +11,12 @@ namespace BiomesExpansion {
         // Obrigatorio: sem registrar o gancho aqui, o jogo nunca chama TerrainContentsGenerator24Initialize.
         public override void __ModInitialize() {
             ModsManager.RegisterHook("TerrainContentsGenerator24Initialize", this);
+            ModsManager.RegisterHook("OnLoadingFinished", this);
+        }
+
+        // Carrega a textura dos blocos da jungle na thread principal, no fim do carregamento.
+        public override void OnLoadingFinished(List<Action> actions) {
+            actions.Add(JungleTextures.Load);
         }
 
         public override void TerrainContentsGenerator24Initialize(
@@ -41,7 +47,7 @@ namespace BiomesExpansion {
                     new ChunkGenerationStep(JungleClimateOrder, jungle.GenerateClimate, "BiomesExpansion.JungleClimate")
                 );
                 // A lista e ordenada pelo jogo depois de todos os hooks.
-                Log.Information("[BiomesExpansion] Jungle v0.3 registrada.");
+                Log.Information("[BiomesExpansion] Jungle v0.4 registrada.");
             }
             catch (Exception e) {
                 Log.Error("[BiomesExpansion] Falha ao registrar a jungle: " + e);
