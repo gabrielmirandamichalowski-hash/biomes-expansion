@@ -46,6 +46,14 @@ namespace BiomesExpansion {
     public class JungleLeavesBlock : LeavesBlock {
         public static int Index = -1;
 
+        // Slot 2 da textura JungleBlocks = folhas. Definido aqui no codigo (e nao so no csv),
+        // porque sem isso as folhas usavam o slot 0 (a casca do tronco).
+        public JungleLeavesBlock() {
+            DefaultTextureSlot = 2;
+        }
+
+        public override int GetFaceTextureSlot(int face, int value) => 2;
+
         public override Color GetLeavesBlockColor(int value, Terrain terrain, int x, int y, int z) =>
             BlockColorsMap.Grass.Lookup(terrain, x, y, z);
 
