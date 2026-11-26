@@ -31,10 +31,11 @@ namespace BiomesExpansion {
         ///  - terreno baixo e plano: afasta a jungle de colinas e montanhas (fator de cordilheira do jogo);
         ///  - clima quente e umido, calculado como o jogo faz mas com menos oitavas de ruido
         ///    (clima "suavizado"), o que forma manchas bem maiores e menos recortadas;
-        ///  - uma mancha do ruido proprio da jungle.
+        ///  - uma mancha do ruido proprio da jungle;
+        ///  - nunca em deserto: exige umidade real da coluna >= 7 (o deserto do jogo e umidade < 8).
         /// Abaixo de um valor minimo a mascara vale exatamente 0: nao sobram arvores soltas fora da jungle.
-        /// Calibrado simulando o ruido do jogo (8 mundos): cerca de 11% do mapa tem alguma jungle,
-        /// ~8% e nucleo, e metade da area esta em manchas de ~480 blocos de diametro ou mais.
+        /// Calibrado simulando o ruido do jogo (8 mundos): cerca de 10,7% do mapa tem alguma jungle,
+        /// ~8% e nucleo, e metade da area esta em manchas de ~450 blocos de diametro ou mais; 0% em deserto.
         /// </summary>
         public float JungleWeight(int x, int z) {
             if (ForceJungleEverywhere) {
@@ -71,7 +72,7 @@ namespace BiomesExpansion {
                     0.6f
                 ) - 0.9f + settings.HumidityOffset / 16f
             );
-            float wet = Squish(humidity, 5f, 8f);
+            float wet = Squish(humidity, 4f, 7f);
             if (wet <= 0f) {
                 return 0f;
             }
@@ -83,7 +84,13 @@ namespace BiomesExpansion {
                 2f,
                 0.55f
             );
-            float raw = warm * wet * Squish(patch, 0.45f, 0.53f) * flat;
+            float raw = warm * wet * Squish(patch, 0.41f, 0.49f) * flat;
+            if (raw > 0.20f) {
+                // Deserto de verdade: o jogo gera deserto (base de arenito e areia) onde a umidade REAL
+                // da coluna e menor que 8 (e temperatura maior que 8). O clima suavizado acima nao enxerga
+                // esses buracos secos, entao filtramos aqui pela umidade real: peso 0 se for < 7.
+                raw *= Squish(m_generator.CalculateHumidity(x, z), 7f, 10f);
+            }
             return Squish(raw, 0.20f, 0.70f);
         }
     }
