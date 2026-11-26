@@ -1,8 +1,8 @@
 {
   "Name": "Biomes Expansion",
-  "Version": "0.4.3",
+  "Version": "0.5.0",
   "ApiVersion": "1.9.3",
-  "Description": "Jungle v0.4: bioma de jungle com blocos proprios.",
+  "Description": "Jungle: bioma com blocos proprios, longe de montanhas.",
   "ScVersion": "2.4.0.0",
   "Author": "Biomes Expansion",
   "PackageName": "biomesexpansion"
