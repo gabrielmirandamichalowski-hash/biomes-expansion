@@ -27,34 +27,64 @@ namespace BiomesExpansion {
         public static float Squish(float v, float zero, float one) => MathUtils.Saturate((v - zero) / (one - zero));
 
         /// <summary>
-        /// 0 = sem jungle, 1 = jungle plena. Exige clima realmente quente e umido (clima original do
-        /// jogo) E uma mancha do ruido proprio. Abaixo de um valor minimo a mascara vale exatamente 0,
-        /// entao nao sobram arvores soltas fora da jungle: ela comeca e termina em bordas definidas
-        /// (com transicao gradual so dentro da borda).
-        /// Calibrado simulando o ruido do jogo: ~7,7% do mapa tem alguma jungle e ~5,3% e nucleo.
+        /// 0 = sem jungle, 1 = jungle plena. Condicoes (todas suaves, multiplicadas):
+        ///  - terreno baixo e plano: afasta a jungle de colinas e montanhas (fator de cordilheira do jogo);
+        ///  - clima quente e umido, calculado como o jogo faz mas com menos oitavas de ruido
+        ///    (clima "suavizado"), o que forma manchas bem maiores e menos recortadas;
+        ///  - uma mancha do ruido proprio da jungle.
+        /// Abaixo de um valor minimo a mascara vale exatamente 0: nao sobram arvores soltas fora da jungle.
+        /// Calibrado simulando o ruido do jogo (8 mundos): cerca de 11% do mapa tem alguma jungle,
+        /// ~8% e nucleo, e metade da area esta em manchas de ~480 blocos de diametro ou mais.
         /// </summary>
         public float JungleWeight(int x, int z) {
             if (ForceJungleEverywhere) {
                 return 1f;
             }
-            float warm = Squish(m_generator.CalculateTemperature(x, z), 7f, 10f);
+            float scaling = m_generator.TGBiomeScaling;
+            // Longe de colinas e montanhas: so em terreno baixo.
+            float flat = 1f - Squish(m_generator.CalculateMountainRangeFactor(x, z), 0.76f, 0.86f);
+            if (flat <= 0f) {
+                return 0f;
+            }
+            WorldSettings settings = m_generator.m_worldSettings;
+            float temperature = 16f * MathUtils.Saturate(
+                3f * SimplexNoise.OctavedNoise(
+                    x + m_generator.m_temperatureOffset.X,
+                    z + m_generator.m_temperatureOffset.Y,
+                    0.0015f / scaling,
+                    2,
+                    2f,
+                    0.6f
+                ) - 1.1f + settings.TemperatureOffset / 16f
+            );
+            float warm = Squish(temperature, 6f, 9f);
             if (warm <= 0f) {
                 return 0f;
             }
-            float wet = Squish(m_generator.CalculateHumidity(x, z), 7f, 10f);
+            float humidity = 16f * MathUtils.Saturate(
+                3f * SimplexNoise.OctavedNoise(
+                    x + m_generator.m_humidityOffset.X,
+                    z + m_generator.m_humidityOffset.Y,
+                    0.0012f / scaling,
+                    2,
+                    2f,
+                    0.6f
+                ) - 0.9f + settings.HumidityOffset / 16f
+            );
+            float wet = Squish(humidity, 5f, 8f);
             if (wet <= 0f) {
                 return 0f;
             }
             float patch = SimplexNoise.OctavedNoise(
                 x + m_jungleOffsetX,
                 z + m_jungleOffsetZ,
-                0.0012f / m_generator.TGBiomeScaling,
-                4,
+                0.0007f / scaling,
+                2,
                 2f,
                 0.55f
             );
-            float raw = warm * wet * Squish(patch, 0.52f, 0.61f);
-            return Squish(raw, 0.30f, 0.80f);
+            float raw = warm * wet * Squish(patch, 0.45f, 0.53f) * flat;
+            return Squish(raw, 0.20f, 0.70f);
         }
     }
 }
