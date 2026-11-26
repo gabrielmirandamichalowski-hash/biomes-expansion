@@ -112,13 +112,14 @@ namespace BiomesExpansion {
             Game.Random random = new(m_seed + chunk.Coords.X * 7919 + chunk.Coords.Y * 104729);
             List<Point3> placed = [];
             // Pesos minimos: so o miolo da jungle recebe arvores gigantes; as bordas so plantas menores.
-            //            pinceis        tent. max  chance  peso min desvio  dist  plano  sob copa
-            Place(chunk, terrain, random, m_giantTrees, 12, 2, 0.55f, 0.50f, 4, 11, 6, true, false, placed);
-            Place(chunk, terrain, random, m_midTrees, 40, 8, 1.00f, 0.30f, 3, 12, 3, false, false, placed);
-            Place(chunk, terrain, random, m_smallTrees, 60, 14, 1.00f, 0.15f, 2, 13, 3, false, false, placed);
+            // Altura maxima do chao: a jungle fica no terreno baixo e nao encobre as montanhas.
+            //            pinceis        tent. max  chance  peso min  alt.max desvio  dist  plano  sob copa
+            Place(chunk, terrain, random, m_giantTrees, 12, 2, 0.55f, 0.50f, 80, 4, 11, 6, true, false, placed);
+            Place(chunk, terrain, random, m_midTrees, 40, 8, 1.00f, 0.30f, 88, 3, 12, 3, false, false, placed);
+            Place(chunk, terrain, random, m_smallTrees, 60, 14, 1.00f, 0.15f, 96, 2, 13, 3, false, false, placed);
             // Arbustos por ultimo e em lista propria: procuram o chao POR BAIXO da copa das arvores.
             List<Point3> bushPlaced = [];
-            Place(chunk, terrain, random, m_bushes, 80, 24, 0.95f, 0.15f, 2, 13, 2, false, true, bushPlaced);
+            Place(chunk, terrain, random, m_bushes, 80, 24, 0.95f, 0.15f, 96, 2, 13, 2, false, true, bushPlaced);
         }
 
         /// <summary>
@@ -169,6 +170,7 @@ namespace BiomesExpansion {
             int maxCount,
             float chance,
             float minWeight,
+            int maxGround,
             int minOffset,
             int maxOffset,
             int minDistance,
@@ -184,7 +186,7 @@ namespace BiomesExpansion {
                     continue;
                 }
                 int y = belowCanopy ? FindGroundBelowCanopy(terrain, x, z) : terrain.CalculateTopmostCellHeight(x, z);
-                if (y < 66) {
+                if (y < 66 || y > maxGround) {
                     continue;
                 }
                 int ground = terrain.GetCellContentsFast(x, y, z);
